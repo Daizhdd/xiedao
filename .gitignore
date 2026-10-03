@@ -1,0 +1,40 @@
+# User data, credentials and local settings
+data/
+**/data/
+*.db
+*.db-*
+*.sqlite*
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.log
+
+# Python environments and generated files
+.venv/
+venv/
+packvenv/
+origvenv
+__pycache__/
+*.py[cod]
+.pytest_cache/
+
+# Build output, private snapshots and downloads
+build/
+build-*/
+dist/
+release*/
+pre_*/
+*.exe
+*.zip
+*.7z
+*.bak
+backup*/
+*.egg-info/
+
+# Editors and OS
+.idea/
+.vscode/
+Thumbs.db
+.DS_Store
