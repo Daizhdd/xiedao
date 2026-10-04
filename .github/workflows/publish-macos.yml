@@ -78,7 +78,8 @@ jobs:
               assert build['https_status'] == 200 and build['tls_roots'] > 0
               report = dict(archive=path.name, bytes=path.stat().st_size, sha256=digest,
                             architecture=arch, native_binaries=0, symlinks=0)
-              with zipfile.ZipFile(path) as archive:
+              # Apple's ditto stores UTF-8 names even for unflagged ZIP metadata.
+              with zipfile.ZipFile(path, metadata_encoding='utf-8') as archive:
                   for item in archive.infolist():
                       name = pathlib.PurePosixPath(item.filename)
                       mode = item.external_attr >> 16
