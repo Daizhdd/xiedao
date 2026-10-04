@@ -1,0 +1,123 @@
+name: Publish verified macOS prerelease
+
+on:
+  workflow_dispatch:
+    inputs:
+      build_run_id:
+        description: Successful Build macOS test packages run ID
+        required: true
+        type: string
+      source_sha:
+        description: Exact commit built and tested by that run
+        required: true
+        type: string
+      release_tag:
+        description: New prerelease tag
+        default: v2026.10.05-macos.1
+        required: true
+        type: string
+
+permissions:
+  actions: read
+  contents: write
+
+jobs:
+  publish:
+    runs-on: ubuntu-latest
+    timeout-minutes: 15
+    env:
+      GH_TOKEN: ${{ github.token }}
+      BUILD_RUN_ID: ${{ inputs.build_run_id }}
+      SOURCE_SHA: ${{ inputs.source_sha }}
+      RELEASE_TAG: ${{ inputs.release_tag }}
+    steps:
+      - uses: actions/checkout@v4
+      - name: Require successful Mac and Windows checks for the exact source
+        run: |
+          python - <<'PY'
+          import json, os, re, subprocess
+          repo = os.environ['GITHUB_REPOSITORY']
+          run = os.environ['BUILD_RUN_ID']
+          sha = os.environ['SOURCE_SHA']
+          tag = os.environ['RELEASE_TAG']
+          assert re.fullmatch(r'[0-9]+', run)
+          assert re.fullmatch(r'[0-9a-f]{40}', sha)
+          assert re.fullmatch(r'v[0-9.]+-macos\.[0-9]+', tag)
+          def api(path):
+              return json.loads(subprocess.check_output(['gh', 'api', f'repos/{repo}/{path}']))
+          build = api(f'actions/runs/{run}')
+          assert build['name'] == 'Build macOS test packages'
+          assert build['conclusion'] == 'success' and build['head_sha'] == sha
+          runs = api(f'actions/runs?head_sha={sha}&per_page=20')['workflow_runs']
+          assert any(item['name'] == 'Offline tests' and item['conclusion'] == 'success'
+                     and item['head_sha'] == sha for item in runs)
+          print(f'Mac and Windows checks passed for {sha}')
+          PY
+      - name: Download verified build outputs inside GitHub
+        uses: actions/download-artifact@v4
+        with:
+          github-token: ${{ github.token }}
+          run-id: ${{ inputs.build_run_id }}
+          pattern: xiedao-macos-*
+          merge-multiple: true
+          path: packages
+      - name: Audit checksums, architectures, executable permissions and private data
+        run: |
+          python - <<'PY'
+          import hashlib, json, os, pathlib, plistlib, stat, struct, zipfile
+          folder = pathlib.Path('packages')
+          reports = []
+          for arch, cpu in [('arm64', 0x0100000c), ('x86_64', 0x01000007)]:
+              path = folder / f'xiedao-macos-{arch}.zip'
+              digest = hashlib.sha256(path.read_bytes()).hexdigest()
+              checksum = (folder / f'SHA256SUMS-macos-{arch}.txt').read_text().split()[0]
+              build = json.loads((folder / f'build-info-macos-{arch}.json').read_text())
+              assert digest == checksum == build['sha256']
+              assert build['passed'] and build['frozen'] and build['architecture'] == arch
+              assert build['source_commit'] == os.environ['SOURCE_SHA']
+              assert build['https_status'] == 200 and build['tls_roots'] > 0
+              report = dict(archive=path.name, bytes=path.stat().st_size, sha256=digest,
+                            architecture=arch, native_binaries=0, symlinks=0)
+              with zipfile.ZipFile(path) as archive:
+                  for item in archive.infolist():
+                      name = pathlib.PurePosixPath(item.filename)
+                      mode = item.external_attr >> 16
+                      assert name.suffix.lower() not in ('.db', '.sqlite', '.sqlite3', '.key')
+                      assert not name.name.startswith(('rebuild_pending_', 'backup_rebuild_'))
+                      assert 'data' not in name.parts
+                      if name.suffix.lower() == '.pem':
+                          assert name.name == 'cacert.pem' and name.parent.name == 'certifi'
+                      if stat.S_ISLNK(mode):
+                          report['symlinks'] += 1
+                      elif not item.is_dir():
+                          with archive.open(item) as file:
+                              header = file.read(8)
+                          if header[:4] == b'\xcf\xfa\xed\xfe':
+                              assert struct.unpack('<I', header[4:8])[0] == cpu, item.filename
+                              report['native_binaries'] += 1
+                  prefix = f'xiedao-macos-{arch}/写道.app/Contents/'
+                  assert archive.getinfo(prefix + 'MacOS/写道').external_attr >> 16 & 0o111
+                  plist = plistlib.loads(archive.read(prefix + 'Info.plist'))
+                  assert plist['CFBundleIdentifier'] == 'io.github.daizhdd.xiedao'
+                  assert plist['LSMinimumSystemVersion'] == '13.0'
+                  archive.getinfo(prefix + '_CodeSignature/CodeResources')
+                  archive.getinfo(f'xiedao-macos-{arch}/licenses/third-party/certifi-LICENSE')
+                  assert report['native_binaries'] > 10 and report['symlinks'] > 0
+                  report['zip_entries'] = len(archive.infolist())
+              report['private_data_audit'] = 'passed'
+              reports.append(report)
+              print(json.dumps(report))
+          (folder / 'package-audit.json').write_text(json.dumps(reports, indent=2))
+          PY
+      - name: Publish audited packages to a new prerelease
+        run: |
+          gh release create "$RELEASE_TAG" packages/*.zip packages/SHA256SUMS-*.txt packages/build-info-*.json packages/package-audit.json \
+            --repo "$GITHUB_REPOSITORY" --target "$SOURCE_SHA" --prerelease --latest=false \
+            --title '写道 · Mac 测试版（Apple 芯片 / Intel）' --notes-file docs/RELEASE_MACOS_2026-10-05.md
+      - name: Preserve the audited packages
+        if: always()
+        uses: actions/upload-artifact@v4
+        with:
+          name: audited-macos-release
+          path: packages/*
+          if-no-files-found: ignore
