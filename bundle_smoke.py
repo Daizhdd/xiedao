@@ -4,9 +4,11 @@ import os
 from pathlib import Path
 import platform
 import sqlite3
+import ssl
 import sys
 import tempfile
 import traceback
+import urllib.request
 
 
 def run(report_directory):
@@ -19,18 +21,20 @@ def run(report_directory):
     from db import DB
     from ui.chat_window import ChatWindow
     from ui.main_window import MainWindow
-    from ui.theme import configure_fonts, build_qss, ui_font_family
+    from ui.theme import configure_fonts, build_qss, ui_font_family, load_dark_pref
+    from ai.transport import https_context
 
     output = Path(report_directory).resolve()
     output.mkdir(parents=True, exist_ok=True)
     report = {'platform': sys.platform, 'architecture': platform.machine(),
               'python': platform.python_version(), 'pyside6': pyside_version,
-              'sqlite': sqlite3.sqlite_version, 'frozen': bool(getattr(sys, 'frozen', False)),
+              'sqlite': sqlite3.sqlite_version, 'openssl': ssl.OPENSSL_VERSION,
+              'frozen': bool(getattr(sys, 'frozen', False)),
               'default_data_directory': str(data_directory()), 'passed': False}
     app = QApplication([])
     app.setApplicationName('写道')
     configure_fonts()
-    app.setStyleSheet(build_qss(dark=False))
+    app.setStyleSheet(build_qss(load_dark_pref()))
     app.setWindowIcon(QIcon(resource_path('assets/brand-logo.png')))
     windows = []
     database = None
@@ -42,6 +46,18 @@ def run(report_directory):
             for asset in ('assets/brand-logo.png', 'assets/icon.ico'):
                 if QIcon(resource_path(asset)).isNull():
                     raise AssertionError(f'Bundled image cannot be loaded: {asset}')
+            if sys.platform == 'darwin':
+                import certifi
+                context = https_context()
+                if (not context.check_hostname or context.verify_mode != ssl.CERT_REQUIRED
+                        or not context.cert_store_stats()['x509_ca']):
+                    raise AssertionError('TLS certificate verification is not enabled')
+                report['certifi'] = certifi.__version__
+                report['tls_roots'] = context.cert_store_stats()['x509_ca']
+                # Read-only public request; never sends manuscripts, API keys or model calls.
+                request = urllib.request.Request('https://github.com', method='HEAD')
+                with urllib.request.urlopen(request, timeout=30, context=context) as response:
+                    report['https_status'] = response.status
             path = str(Path(temporary.name) / '中文数据' / 'novel.db')
             database = DB(path)
             if database.conn.execute('SELECT count(*) FROM projects').fetchone()[0]:
@@ -84,7 +100,8 @@ def run(report_directory):
             report.update(passed=True, ui_font=ui_font_family(),
                           checks=['empty-database', 'bundled-images', 'bookroom-render',
                                   'editor-save', 'version-snapshot', 'backup-restore',
-                                  'database-reopen'])
+                                  'database-reopen'] +
+                                 (['verified-https'] if sys.platform == 'darwin' else []))
         except Exception:
             report['error'] = traceback.format_exc()
         finally:

@@ -13,6 +13,7 @@ import urllib.request
 import urllib.error
 import urllib.parse
 from datetime import datetime
+from ai.transport import request_options
 
 PROVIDER_HINTS = {
     "deepseek": "https://api.deepseek.com/v1",
@@ -303,7 +304,7 @@ def chat_stream(cfg, messages, temperature=0.8, max_tokens=4096, timeout=300,
         usage = None
         try:
             _resolve(host)
-            with urllib.request.urlopen(req, timeout=timeout) as resp:
+            with urllib.request.urlopen(req, timeout=timeout, **request_options(req)) as resp:
                 for raw in resp:
                     line = raw.decode("utf-8", "ignore").strip()
                     if not line.startswith("data:"):
@@ -368,7 +369,7 @@ def _post(cfg, body, timeout):
     try:
         _resolve(host)                   # 解析卡住 = 秒级失败，不悬死
         req = _make_request(cfg, url, body)
-        with urllib.request.urlopen(req, timeout=timeout) as resp:
+        with urllib.request.urlopen(req, timeout=timeout, **request_options(req)) as resp:
             try:
                 data = json.loads(resp.read().decode("utf-8"))
             except (UnicodeDecodeError, ValueError) as e:

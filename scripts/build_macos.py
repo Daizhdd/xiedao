@@ -1,6 +1,7 @@
 """Build, run and archive native macOS bundles, preserving symlinks and permissions."""
 import argparse
 import hashlib
+from importlib import metadata
 import json
 import os
 from pathlib import Path
@@ -53,7 +54,9 @@ def main():
     prohibited = []
     for item in bundle.rglob('*'):
         relative = item.relative_to(bundle)
-        if (item.suffix.lower() in ('.db', '.sqlite', '.sqlite3', '.key', '.pem')
+        public_ca = item.name == 'cacert.pem' and item.parent.name == 'certifi'
+        if ((item.suffix.lower() in ('.db', '.sqlite', '.sqlite3', '.key', '.pem')
+             and not public_ca)
                 or item.name.startswith(('backup_rebuild_', 'rebuild_pending_'))
                 or 'data' in relative.parts):
             prohibited.append(str(relative))
@@ -61,13 +64,17 @@ def main():
         raise RuntimeError(f'Private data unexpectedly bundled: {prohibited}')
     output = ROOT / 'release-macos'
     output.mkdir(exist_ok=True)
-    staging = build / f'package-{args.arch}'
+    staging = build / f'xiedao-macos-{args.arch}'
     staging.mkdir(exist_ok=True)
     # ditto preserves the framework symlinks that a generic ZIP writer can lose.
     command('ditto', bundle, staging / '写道.app')
     for name in ('LICENSE', 'THIRD_PARTY_NOTICES.md'):
         shutil.copy2(ROOT / name, staging / name)
     shutil.copytree(ROOT / 'licenses', staging / 'licenses', dirs_exist_ok=True)
+    certifi = metadata.distribution('certifi')
+    license_file = next(file for file in certifi.files if file.name == 'LICENSE')
+    shutil.copy2(certifi.locate_file(license_file),
+                 staging / 'licenses/third-party/certifi-LICENSE')
     shutil.copy2(ROOT / 'docs/MACOS.md', staging / 'Mac使用说明.md')
     archive = output / f'xiedao-macos-{args.arch}.zip'
     command('ditto', '-c', '-k', '--sequesterRsrc', '--keepParent', staging, archive)
@@ -75,6 +82,8 @@ def main():
     (output / f'SHA256SUMS-macos-{args.arch}.txt').write_text(
         f'{digest}  {archive.name}\n', encoding='ascii')
     report.update(archive=archive.name, sha256=digest,
+                  source_commit=subprocess.check_output(['git', 'rev-parse', 'HEAD'],
+                                                        cwd=ROOT, text=True).strip(),
                   signing='ad-hoc; not Apple Developer ID signed or notarized',
                   private_data_audit='passed')
     (output / f'build-info-macos-{args.arch}.json').write_text(

@@ -12,6 +12,7 @@ Mac 测试版采用相同的 PySide6 / Qt 和 PyInstaller 版本，以 `.app` �
 | Qt SVG / image format plugins | 6.11.2 | Applicable Qt and third-party licenses; [SVG source](https://github.com/qt/qtsvg/tree/v6.11.2), [imageformats source](https://github.com/qt/qtimageformats/tree/v6.11.2) |
 | Qt Virtual Keyboard plugin | 6.11.2 | GPL-3.0 in the open-source distribution; [source](https://github.com/qt/qtvirtualkeyboard/tree/v6.11.2) |
 | PyInstaller bootloader | 6.22.3 | GPL with the bootloader distribution exception; [source](https://github.com/pyinstaller/pyinstaller/tree/v6.22.3) |
+| Certifi (Mac only) | 2026.7.22 | MPL-2.0; public Mozilla CA certificates; [source and license](https://github.com/certifi/python-certifi) |
 | OpenSSL runtime | 3.0.21 | Apache-2.0; [source](https://github.com/openssl/openssl/tree/openssl-3.0.21) |
 | SQLite and other CPython dependencies | SQLite 3.50.4 / bundled with CPython | See Python license collection and [SQLite](https://sqlite.org/copyright.html) |
 | Microsoft Visual C++ / Universal C runtime | Bundled redistributable files | Microsoft redistributable terms; [reference](https://learn.microsoft.com/en-us/cpp/windows/redistributing-visual-cpp-files) |

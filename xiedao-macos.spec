@@ -1,10 +1,12 @@
 # -*- mode: python ; coding: utf-8 -*-
 import os
+from PyInstaller.utils.hooks import copy_metadata
 
 a = Analysis(
     ['app.py'], pathex=[], binaries=[],
     datas=[('assets/icon.ico', 'assets'), ('assets/brand-logo.png', 'assets'),
-           ('LICENSE', '.'), ('THIRD_PARTY_NOTICES.md', '.'), ('licenses', 'licenses')],
+           ('LICENSE', '.'), ('THIRD_PARTY_NOTICES.md', '.'), ('licenses', 'licenses')]
+          + copy_metadata('certifi'),
     hiddenimports=[], hookspath=[], hooksconfig={}, runtime_hooks=[],
     excludes=[], noarchive=False, optimize=0,
 )
