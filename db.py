@@ -3,15 +3,11 @@
 表：projects / settings_dict / chapters / chapter_versions / ai_configs
 """
 import os
-import sys
 import sqlite3
 from datetime import datetime
+from app_paths import data_directory
 
-if getattr(sys, "frozen", False):
-    _BASE = os.path.dirname(sys.executable)      # exe 同目录（数据可携带）
-else:
-    _BASE = os.path.dirname(os.path.abspath(__file__))
-DB_PATH = os.path.join(_BASE, "data", "novel.db")
+DB_PATH = str(data_directory() / "novel.db")
 
 CATEGORIES = ("力量体系", "地理", "历史", "术语", "人物")
 

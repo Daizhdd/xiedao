@@ -1,5 +1,7 @@
 # 构建 Windows 程序
 
+Mac 的原生构建、自动构建和验证步骤见 [MACOS.md](MACOS.md)。Windows 与 Mac 共享应用源码，分别使用 `xiedao.spec` 和 `xiedao-macos.spec`。
+
 ## 环境
 
 首个开源发布验证使用 Windows x64、CPython 3.13.15、PySide6 / Shiboken6 6.11.2 和 PyInstaller 6.22.3。

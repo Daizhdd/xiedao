@@ -8,6 +8,8 @@ from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                                QTabWidget, QLineEdit, QSpinBox, QFormLayout)
 from PySide6.QtCore import Signal
 from PySide6.QtGui import QKeySequence, QShortcut
+from ui.shortcuts import shortcut_hint, save_sequence
+from ui.theme import ui_font_family
 
 MODE_EMPTY = 0
 MODE_CHAPTER = 1
@@ -48,14 +50,14 @@ class Editor(QWidget):
         top.addStretch(1)
         self.btn_ai = QPushButton("AI 生成草案")
         self.btn_ai.setVisible(False)
-        self.btn_ai.setToolTip("根据上下文生成可编辑草稿；正文生成用 Ctrl+G")
+        self.btn_ai.setToolTip(f"根据上下文生成可编辑草稿；正文生成用 {shortcut_hint('G')}")
         self.btn_ai.clicked.connect(lambda: self.ai_draft_requested.emit())
         top.addWidget(self.btn_ai)
         self.btn_version = QPushButton("版本历史")
         self.btn_version.setVisible(False)
         self.btn_version.clicked.connect(lambda: self.version_requested.emit())
         top.addWidget(self.btn_version)
-        self.btn_save = QPushButton("保存 (Ctrl+S)")
+        self.btn_save = QPushButton(f"保存 ({shortcut_hint('S')})")
         self.btn_save.setObjectName('primaryAction')
         self.btn_save.setVisible(False)
         self.btn_save.clicked.connect(lambda: self.save_requested.emit())
@@ -109,7 +111,7 @@ class Editor(QWidget):
         self.edit = QPlainTextEdit()
         self.edit.setObjectName("mainEdit")
         from PySide6.QtGui import QFont
-        f = QFont("Microsoft YaHei", 11)
+        f = QFont(ui_font_family(), 11)
         self.edit.setFont(f)
         self.card_edit = QPlainTextEdit()
         self.card_edit.setObjectName("cardEdit")
@@ -124,9 +126,9 @@ class Editor(QWidget):
         self.edit.textChanged.connect(self._live_count)
 
         self.edit.setPlaceholderText(
-            "在左侧选择内容开始编辑。\n\n章节：写正文（Markdown），Ctrl+S 保存并自动生成版本快照；「章节卡」页签填本章要求。\nCtrl+G 调 AI 生成本章。")
+            f"在左侧选择内容开始编辑。\n\n章节：写正文（Markdown），{shortcut_hint('S')} 保存并自动生成版本快照；「章节卡」页签填本章要求。\n{shortcut_hint('G')} 调 AI 生成本章。")
 
-        QShortcut(QKeySequence("Ctrl+S"), self, activated=self._on_ctrl_s)
+        QShortcut(save_sequence(), self, activated=self._on_ctrl_s)
         QShortcut(QKeySequence("Ctrl+G"), self, activated=lambda: self.generate_shortcut.emit())
 
     def _on_ctrl_s(self):

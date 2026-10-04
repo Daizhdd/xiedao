@@ -3,16 +3,17 @@
 用法：QApplication.setStyleSheet(build_qss(dark=True))；主题偏好存 QSettings。
 """
 import os
+import sys
 from PySide6.QtCore import QSettings
 
-_FONT_UI = "Microsoft YaHei"
+_FONT_UI = "PingFang SC" if sys.platform == "darwin" else "Microsoft YaHei"
 _ORG = "AIXiaoshuoGongzuotai"
 _fonts_configured = False
 
 
 def configure_fonts():
-    """Use the installed Windows Chinese font even when font discovery is limited."""
-    global _fonts_configured
+    """Select an installed UI font without carrying Windows fonts to macOS."""
+    global _fonts_configured, _FONT_UI
     from PySide6.QtGui import QFont, QFontDatabase
     from PySide6.QtWidgets import QApplication
     app = QApplication.instance()
@@ -24,8 +25,17 @@ def configure_fonts():
             path = os.path.join(folder, filename)
             if os.path.isfile(path):
                 QFontDatabase.addApplicationFont(path)
+    available = set(QFontDatabase.families())
+    if _FONT_UI not in available:
+        _FONT_UI = next((name for name in ("PingFang SC", "Microsoft YaHei",
+                          "Noto Sans CJK SC", "Heiti SC") if name in available),
+                        app.font().family())
     app.setFont(QFont(_FONT_UI, 10))
     _fonts_configured = True
+
+
+def ui_font_family():
+    return _FONT_UI
 
 _DARK = dict(
     BG="#191A1C", PANEL="#222427", INPUT="#27292C", LINE="#3B3E42",

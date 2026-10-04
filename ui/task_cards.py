@@ -106,8 +106,10 @@ class ActivityCard(QFrame):
 
     @staticmethod
     def _mono():
-        from PySide6.QtGui import QFont
-        return QFont("Consolas", 9)
+        from PySide6.QtGui import QFontDatabase
+        font = QFontDatabase.systemFont(QFontDatabase.SystemFont.FixedFont)
+        font.setPointSize(9)
+        return font
 
     def _toggle_log(self):
         self.log_view.setVisible(not self.log_view.isVisible())

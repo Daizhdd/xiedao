@@ -12,6 +12,7 @@ from book_backup import recover_pending_rebuilds
 from db import DB
 from ui.chat_window import ChatWindow
 from ui.theme import build_qss, load_dark_pref, configure_fonts
+from app_paths import resource_path
 
 SINGLE_KEY = "xiedao_single_instance_v1"   # Windows 下即命名管道 \\.\pipe\<key>
 
@@ -50,17 +51,15 @@ def _start_instance_server(win):
     win._single_server = server
 
 
-def resource_path(rel):
-    base = getattr(sys, "_MEIPASS", os.path.dirname(os.path.abspath(__file__)))
-    return os.path.join(base, rel)
-
-
 def main():
+    if len(sys.argv) == 3 and sys.argv[1] == "--smoke-test":
+        from bundle_smoke import run
+        return run(sys.argv[2])
     app = QApplication(sys.argv)
-    configure_fonts()
     app.setApplicationName("写道")
+    configure_fonts()
     app.setStyleSheet(build_qss(load_dark_pref()))  # 全局主题
-    icon = resource_path(os.path.join("assets", "icon.ico"))
+    icon = resource_path(os.path.join("assets", "brand-logo.png"))
     if os.path.exists(icon):
         app.setWindowIcon(QIcon(icon))
     if _already_running():
@@ -81,7 +80,7 @@ def main():
         QMessageBox.information(
             None, "已恢复未完成的重构",
             f"检测到上次未完成的全书重构，已从完整备份恢复：{names}\n\n"
-            "原备份文件仍保留在 data 目录。")
+            f"原备份文件仍保留在数据目录：{os.path.dirname(db.path)}")
     win = ChatWindow(db)
     _start_instance_server(win)
     win.show()

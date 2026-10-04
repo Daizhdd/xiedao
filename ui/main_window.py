@@ -18,6 +18,7 @@ from ai import client as aiclient
 from ai import prompts
 from ai import parse as aparse
 from ai.context import context_pack_for, vol_outline_for
+from ui.shortcuts import shortcut_hint
 
 
 class AIWorker(QThread):
@@ -393,7 +394,7 @@ class MainWindow(QMainWindow):
         self.tree.load_project_detail(pid)
         self._on_chapter(cid)
         self.statusBar().showMessage(
-            f"已从章纲创建 第{next_no}章《{ch_title}》（已绑定），Ctrl+G 生成正文", 5000)
+            f"已从章纲创建 第{next_no}章《{ch_title}》（已绑定），{shortcut_hint('G')} 生成正文", 5000)
 
     def _version_dialog(self):
         if self.editor.mode == MODE_CHAPTER and self.current_chapter_id:
@@ -572,7 +573,7 @@ class MainWindow(QMainWindow):
             self.editor.card_edit.setPlainText(text)
         else:
             self.editor.edit.setPlainText(text)
-        self.statusBar().showMessage("AI 草稿已填入（可编辑，Ctrl+S 保存）", 4000)
+        self.statusBar().showMessage(f"AI 草稿已填入（可编辑，{shortcut_hint('S')} 保存）", 4000)
 
     # ---- 右键批量 AI 生成（勾选入库）----
     def _plan(self, project):

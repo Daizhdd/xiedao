@@ -32,6 +32,7 @@ from ui.background import SimpleWorker
 from ui.brand import BrandMark
 from ui.task_cards import ActivityCard, PlanCard, _bubble_frame
 from ui.task_coordinator import get_coordinator, outcome
+from ui.shortcuts import shortcut_hint
 
 
 
@@ -1406,7 +1407,7 @@ class ChatWindow(QMainWindow):
         self._open_chapter_dialog(ch["id"], ch["title"])
         state = "已有正文" if (ch["content"] or "").strip() else "还没有正文"
         self._add_agent_bubble(f"已打开第{no}章《{ch['title']}》（{state}），"
-                               "改完 Ctrl+S 保存。")
+                               f"改完 {shortcut_hint('S')} 保存。")
 
     def _task_busy(self):
         return self._tasks.busy

@@ -2,6 +2,8 @@
 
 写道自有源码使用 MIT。Windows 单文件程序同时分发以下独立依赖；它们的许可不因写道采用 MIT 而改变。
 
+Mac 测试版采用相同的 PySide6 / Qt 和 PyInstaller 版本，以 `.app` 内动态库形式分发。实际 Python、SQLite 和平台版本记录在每个包对应的 `build-info-macos-<架构>.json`；Mac 不分发 Microsoft Visual C++ 运行库。包内保留本文件和 `licenses/third-party/`，并公开 Mac 构建脚本及 spec，便于替换依赖后重新构建。下表中 Windows 的 OpenSSL / SQLite 版本不代表所有 Mac 构建环境的版本。
+
 | Component | Version | License / source |
 | --- | --- | --- |
 | CPython | 3.13.15 | PSF license; [source](https://www.python.org/downloads/release/python-31315/) |

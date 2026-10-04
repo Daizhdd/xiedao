@@ -27,6 +27,9 @@ dist/
 release*/
 pre_*/
 *.exe
+*.app/
+*.dmg
+*.icns
 *.zip
 *.7z
 *.bak

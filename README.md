@@ -6,7 +6,7 @@
 
 **软件免费，源码以 MIT 许可证开放。模型服务由你自行配置；模型服务商可能收取 API 费用。**
 
-[下载 Windows 版](https://github.com/Daizhdd/xiedao/releases/latest) · [使用说明](docs/GETTING_STARTED.md) · [反馈问题](https://github.com/Daizhdd/xiedao/issues) · [参与开发](CONTRIBUTING.md)
+[下载 Windows 版](https://github.com/Daizhdd/xiedao/releases/latest) · [Mac 测试版](https://github.com/Daizhdd/xiedao/releases/tag/v2026.10.05-macos.1) · [使用说明](docs/GETTING_STARTED.md) · [反馈问题](https://github.com/Daizhdd/xiedao/issues) · [参与开发](CONTRIBUTING.md)
 
 ## 可以做什么
 
@@ -28,6 +28,12 @@ AI 生成的正文和审稿意见需要作者复核。项目正在持续完善�
 
 下载包不包含书稿、数据库、API Key 或预设付费账户。首次运行会在程序旁创建 `data/`。更新时先关闭写道、备份整个 `data/`，再替换程序；请保留原来的 `data/`。
 
+## Mac 测试版
+
+提供 Apple 芯片 `arm64` 和 Intel `x86_64` 两个独立下载包。解压后将 `写道.app` 拖入“应用程序”。小说、模型配置和备份保存在 `~/Library/Application Support/写道/`，更新时保留这个目录。
+
+测试包由 GitHub macOS 环境构建并执行离线回归、应用启动、编辑保存及备份恢复检查。尚未取得普通用户的真机反馈；未使用 Apple Developer ID 签名，也未完成苹果公证，系统可能拦截首次打开。安装、数据迁移与验证范围见 [Mac 使用说明](docs/MACOS.md)。
+
 ## 从源码运行
 
 当前验证环境：Windows x64、Python 3.13、PySide6 6.11.2。
@@ -40,7 +46,7 @@ py -3.13 -m venv .venv
 .\.venv\Scripts\python.exe app.py
 ```
 
-源码运行的数据位于项目目录 `data/novel.db`。其他系统暂未做完整验证。
+Windows 源码运行的数据位于项目目录 `data/novel.db`；Mac 源码运行也使用 `~/Library/Application Support/写道/novel.db`。Mac 源码运行与打包步骤见 [Mac 使用说明](docs/MACOS.md)。
 
 ## 离线验证与打包
 

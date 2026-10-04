@@ -3,6 +3,7 @@
 from PySide6.QtWidgets import (QWidget, QVBoxLayout, QHBoxLayout, QLabel,
                                QComboBox, QPushButton, QTextEdit, QGroupBox)
 from PySide6.QtCore import Signal
+from ui.shortcuts import shortcut_hint
 
 
 class AIPanel(QWidget):
@@ -27,7 +28,7 @@ class AIPanel(QWidget):
 
         g2 = QGroupBox("AI 操作")
         g2l = QVBoxLayout(g2)
-        self.btn_gen = QPushButton("生成本章（Ctrl+G）")
+        self.btn_gen = QPushButton(f"生成本章（{shortcut_hint('G')}）")
         self.btn_gen.clicked.connect(lambda: self.generate_requested.emit())
         g2l.addWidget(self.btn_gen)
         self.btn_polish = QPushButton("润色当前文本")
